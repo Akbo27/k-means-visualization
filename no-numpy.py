@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+import time
 
 initial_centroids = [(2, 3), (7, 8), (3, 9)] 
 num_points = 300
@@ -20,11 +21,51 @@ for centroid in initial_centroids:
 
 plt.figure(figsize=(8, 6))
 for centroid in initial_centroids:
-    plt.scatter(*centroid, color='red', s=100, label="Centroid")  
+    plt.scatter(*centroid, color='red', s=100, label="Centroid") 
 
-points_x = [p[0] for p in all_points]
-points_y = [p[1] for p in all_points]
-plt.scatter(points_x, points_y, s=10, alpha=0.7, label="Points")
+def k_means(points, centroids, max_iterations = 500):
+    for i in range(max_iterations):
+        clusters = [[] for i in range(len(centroids))]
+        
+        for point in points:
+            distances = []
+            for centroid in centroids:
+                dist = ((point[0] - centroid[0]) ** 2 + (point[1] - centroid[1]) ** 2) ** 0.5 
+                distances.append(dist)
+            closest_centroid = distances.index(min(distances))
+            clusters[closest_centroid].append(point)
+
+        new_centroids = []
+        for cluster in clusters:
+            if cluster:  
+                new_x = sum([p[0] for p in cluster]) / len(cluster)
+                new_y = sum([p[1] for p in cluster]) / len(cluster)
+                new_centroids.append((new_x, new_y))
+            else:
+                new_centroids.append(centroids[clusters.index(cluster)])
+
+        if new_centroids == centroids:
+            break
+
+        centroids = new_centroids
+
+    return centroids, clusters
+
+start_time = time.time()
+final_centroids, final_clusters = k_means(all_points, initial_centroids)
+end_time = time.time()
+
+print(f"K-means completed in {end_time - start_time:.4f} seconds")
+
+plt.figure(figsize=(8, 6))
+
+for i, cluster in enumerate(final_clusters):
+    cluster_x = [p[0] for p in cluster]
+    cluster_y = [p[1] for p in cluster]
+    plt.scatter(cluster_x, cluster_y, label=f"Cluster {i+1}", s=10, alpha=0.7)
+
+for centroid in final_centroids:
+    plt.scatter(*centroid, color='red', s=100, label="Centroid", marker='X')
 
 plt.title("Random Points Around Guessed Centroids")
 plt.xlabel("X-axis")
